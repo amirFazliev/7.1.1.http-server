@@ -3,7 +3,6 @@ package ru.netology;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.nio.file.Path;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
@@ -16,10 +15,9 @@ public class Server {
 
     public void startServer (int port) throws IOException {
         try (var serverSocket = new ServerSocket(port)) {
-            var path = Path.of("./public");
             while (true) {
                 Socket socket = serverSocket.accept();
-                threadPool.submit(new MessageProcessor(path, socket));
+                threadPool.submit(new MessageProcessor(socket));
             }
         } catch (IOException e) {
             e.printStackTrace();
