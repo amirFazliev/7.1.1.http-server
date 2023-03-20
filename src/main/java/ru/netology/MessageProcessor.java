@@ -35,7 +35,7 @@ public class MessageProcessor implements Runnable {
                     break;
                 }
 
-                if(request.getPath().contains("?")){
+                if (request.getPath().contains("?")) {
                     System.out.println(request.getQueryParams());
                     for (NameValuePair queryParam : request.getQueryParams()) {
                         System.out.println("Name - " + queryParam.getName() + "; Value - " + queryParam.getValue());
@@ -43,6 +43,10 @@ public class MessageProcessor implements Runnable {
                     System.out.println(request.getQueryParam("fsfsdf"));
                     System.out.println(request.getQueryParam("last"));
                 }
+
+                System.out.println(request.getPostParams());
+                System.out.println(request.getPostParam("login"));
+
 
                 this.handler = getHandler(request.getMethod(), extractPath(request.getPath()));
                 if (handler != null) {
@@ -54,7 +58,7 @@ public class MessageProcessor implements Runnable {
                 out.flush();
                 break;
             }
-        } catch(Exception e){
+        } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }

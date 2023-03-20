@@ -13,7 +13,7 @@ public class Server {
 
     private static ConcurrentMap<String, ConcurrentMap<String, Handler>> handlersMap = new ConcurrentHashMap<>();
 
-    public void startServer (int port) throws IOException {
+    public void startServer (int port) {
         try (var serverSocket = new ServerSocket(port)) {
             while (true) {
                 Socket socket = serverSocket.accept();

@@ -1,14 +1,9 @@
 package ru.netology;
 
-import org.apache.http.NameValuePair;
-import org.apache.http.client.utils.URLEncodedUtils;
-
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
-import java.util.List;
 
 public class Main {
 
@@ -26,7 +21,6 @@ public class Main {
         String fullPathNine = "/index.html";
         String fullPathTen = "/events.html";
         String fullPathEleven = "/events.js";
-
 
         Server server = new Server();
 

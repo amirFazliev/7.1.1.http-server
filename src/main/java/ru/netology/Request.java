@@ -8,6 +8,7 @@ import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 
@@ -25,6 +26,8 @@ public class Request {
     private String messageBody;
 
     private List<NameValuePair> listUrlParameters;
+
+    private List<String> postParams = new LinkedList<>();
 
     private boolean flagProgramm = false;
 
@@ -92,7 +95,7 @@ public class Request {
         System.out.println("_________________");
 
         final var path = parts[1];
-        if (pathIsNotValidPath(path)) {
+        if (!pathIsNotValidPath(path)) {
             System.out.println("Ошибка 404 Not Found - в запросе не указан путь");
             setFlagProgramm(true);
             return;
@@ -208,5 +211,26 @@ public class Request {
         return -1;
     }
 
+    public List<String> getPostParams() {
+        for (String s : messageBody.split("&")) {
+            postParams.add(s);
+        }
+        return postParams;
+    }
+
+    public List<List<String>> getPostParam(String name) {
+        List<List<String>> bigList =  new LinkedList<>();
+        for (String postParam : postParams) {
+            List<String> list = new LinkedList<>();
+            String first = postParam.substring(0, postParam.indexOf("="));
+            if (first.equals(name)) {
+                String end = postParam.substring(postParam.indexOf("=") + 1);
+                list.add(first);
+                list.add(end);
+                bigList.add(list);
+            }
+        }
+        return bigList;
+    }
 
 }
