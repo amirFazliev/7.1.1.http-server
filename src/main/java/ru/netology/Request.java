@@ -176,7 +176,6 @@ public class Request {
         return null;
     }
 
-
     public static Optional<String> extractHeader(List<String> headers, String header) {
         return headers.stream()
                 .filter(o -> o.startsWith(header))
@@ -208,4 +207,6 @@ public class Request {
         }
         return -1;
     }
+
+
 }
