@@ -90,7 +90,7 @@ public class Main {
 
     public static String extractPath(String path) {
         int first = path.startsWith("/") ? 0 : (path.lastIndexOf("/"));
-        int end = path.endsWith("?") ? path.length() : path.indexOf("?");
+        int end = path.contains("?") ? path.indexOf("?") : path.length();
 
         String text = path.substring(first, end);
 
