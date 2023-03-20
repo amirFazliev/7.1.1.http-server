@@ -92,7 +92,8 @@ public class Request {
         System.out.println("_________________");
 
         final var path = parts[1];
-        if (pathIsNotValidPath(path)) {
+
+        if (!pathIsNotValidPath(path)) {
             System.out.println("Ошибка 404 Not Found - в запросе не указан путь");
             setFlagProgramm(true);
             return;
