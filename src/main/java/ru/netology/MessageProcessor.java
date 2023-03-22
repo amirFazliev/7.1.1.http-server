@@ -35,17 +35,20 @@ public class MessageProcessor implements Runnable {
                     break;
                 }
 
-                if (request.getPath().contains("?")) {
-                    System.out.println(request.getQueryParams());
-                    for (NameValuePair queryParam : request.getQueryParams()) {
-                        System.out.println("Name - " + queryParam.getName() + "; Value - " + queryParam.getValue());
-                    }
-                    System.out.println(request.getQueryParam("fsfsdf"));
-                    System.out.println(request.getQueryParam("last"));
+//                if (request.getPath().contains("?")) {
+//                    System.out.println(request.getQueryParams());
+//                    for (NameValuePair queryParam : request.getQueryParams()) {
+//                        System.out.println("Name - " + queryParam.getName() + "; Value - " + queryParam.getValue());
+//                    }
+//                    System.out.println(request.getQueryParam("fsfsdf"));
+//                    System.out.println(request.getQueryParam("last"));
+//                }
+
+                if (request.getContentType().equals("application/x-www-form-urlencoded")){
+                    System.out.println(request.getPostParams());
+                    System.out.println(request.getPostParam("login"));
                 }
 
-                System.out.println(request.getPostParams());
-                System.out.println(request.getPostParam("login"));
 
 
                 this.handler = getHandler(request.getMethod(), extractPath(request.getPath()));

@@ -31,6 +31,9 @@ public class Request {
 
     private boolean flagProgramm = false;
 
+    private String boundaryForMultipartFormData;
+    private String contentType;
+
     public Request(BufferedInputStream in, BufferedOutputStream out, int limit) throws IOException {
         in.mark(limit);
         final var buffer = new byte[limit];
@@ -50,8 +53,21 @@ public class Request {
         chooseHeaders(in, out, requestLineDelimiter, requestLineEnd, buffer, read);
     }
 
-    public List<String> getHeaders() {
-        return headers;
+    public String getContentType() {
+        for (String header : headers) {
+            if (header.contains("Content-Type")) {
+                String[] str = header.split(" ");
+                if (str[1].contains("multipart/form-data")) {
+                    contentType = str[1].substring(0, str[1].length()-1);
+                    boundaryForMultipartFormData = str[2];
+                    return contentType;
+                } else {
+                    contentType = str[1];
+                    return contentType;
+                }
+            }
+        }
+        return null;
     }
 
     public String getMethod() {
@@ -60,10 +76,6 @@ public class Request {
 
     public String getPath() {
         return path;
-    }
-
-    public String getMessageBody() {
-        return messageBody;
     }
 
     public boolean isFlagProgramm() {
