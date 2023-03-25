@@ -3,34 +3,25 @@ package ru.netology;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.utils.URLEncodedUtils;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 public class Request {
 
     private String[] request;
     private String method;
-
     private String path;
-
     private String protocol;
-
     private List<String> headers;
-
     private String messageBody;
-
     private List<NameValuePair> listUrlParameters;
-
     private List<String> postParams = new LinkedList<>();
-
+    private List<List<String>> listMultipart = new LinkedList<>();
+    private String fileName;
+    private String fileString;
+    private File fileMultiPart;
     private boolean flagProgramm = false;
-
     private String boundaryForMultipartFormData;
     private String contentType;
 
@@ -53,21 +44,35 @@ public class Request {
         chooseHeaders(in, out, requestLineDelimiter, requestLineEnd, buffer, read);
     }
 
-    public String getContentType() {
+    public void setContentType() {
         for (String header : headers) {
             if (header.contains("Content-Type")) {
                 String[] str = header.split(" ");
                 if (str[1].contains("multipart/form-data")) {
-                    contentType = str[1].substring(0, str[1].length()-1);
-                    boundaryForMultipartFormData = str[2];
-                    return contentType;
+                    contentType = str[1].substring(0, str[1].length() - 1);
+                    boundaryForMultipartFormData = str[2].substring("boundary=".length());
                 } else {
                     contentType = str[1];
-                    return contentType;
                 }
+                return;
             }
         }
-        return null;
+    }
+
+    public String getContentType() {
+        return contentType;
+    }
+
+    public File getFileMultiPart() {
+        return fileMultiPart;
+    }
+
+    public String getFileString() {
+        return fileString;
+    }
+
+    public void setFileMultiPart(File fileMultiPart) {
+        this.fileMultiPart = fileMultiPart;
     }
 
     public String getMethod() {
@@ -155,6 +160,8 @@ public class Request {
         System.out.println(headers);
         System.out.println("_________________");
 
+        setContentType();
+
         if (!method.equals("GET")) {
             chooseBody(in, headersDelimiter);
         }
@@ -174,21 +181,6 @@ public class Request {
             System.out.println(body);
             System.out.println("_________________");
         }
-    }
-
-    public List<NameValuePair> getQueryParams() {
-        String urlParam = path.substring(path.indexOf("?") + 1);
-        listUrlParameters = URLEncodedUtils.parse(urlParam, StandardCharsets.UTF_8);
-        return listUrlParameters;
-    }
-
-    public String getQueryParam(String name) {
-        for (NameValuePair listUrlParameter : listUrlParameters) {
-            if (listUrlParameter.getName().equals(name)) {
-                return listUrlParameter.getValue();
-            }
-        }
-        return null;
     }
 
     public static Optional<String> extractHeader(List<String> headers, String header) {
@@ -223,6 +215,21 @@ public class Request {
         return -1;
     }
 
+    public List<NameValuePair> getQueryParams() {
+        String urlParam = path.substring(path.indexOf("?") + 1);
+        listUrlParameters = URLEncodedUtils.parse(urlParam, StandardCharsets.UTF_8);
+        return listUrlParameters;
+    }
+
+    public String getQueryParam(String name) {
+        for (NameValuePair listUrlParameter : listUrlParameters) {
+            if (listUrlParameter.getName().equals(name)) {
+                return listUrlParameter.getValue();
+            }
+        }
+        return null;
+    }
+
     public List<String> getPostParams() {
         for (String s : messageBody.split("&")) {
             postParams.add(s);
@@ -231,7 +238,7 @@ public class Request {
     }
 
     public List<List<String>> getPostParam(String name) {
-        List<List<String>> bigList =  new LinkedList<>();
+        List<List<String>> bigList = new LinkedList<>();
         for (String postParam : postParams) {
             List<String> list = new LinkedList<>();
             String first = postParam.substring(0, postParam.indexOf("="));
@@ -245,4 +252,49 @@ public class Request {
         return bigList;
     }
 
+    public List<List<String>> getParts() {
+        String splits = "--" + boundaryForMultipartFormData + "\r\n";
+        String splitEnd = splits + "--" + "\r\n";
+        String text = messageBody.substring(splits.length(), (messageBody.length() - splitEnd.length()));
+        for (String s : text.split(splits)) {
+            String[] parsText = s.split("\r\n\r\n");
+            List<String> list = new ArrayList<>();
+            if (s.contains("Content-Type: ")) {
+                String fileNameBasic = s.substring(s.indexOf("filename=") + "filename=".length() + 1);
+                fileName = fileNameBasic.substring(0, fileNameBasic.indexOf("\""));
+                list.add(fileName);
+                fileString = parsText[1];
+                list.add(fileString);
+                fileMultiPart = new File(fileName);
+                try (FileOutputStream fos = new FileOutputStream(fileMultiPart)) {
+                    byte[] bytes = fileString.getBytes();
+                    fos.write(bytes, 0, bytes.length);
+                } catch (IOException ex) {
+                    System.out.println(ex.getMessage());
+                }
+                listMultipart.add(list);
+            } else {
+                String fileStart = parsText[0].substring(s.indexOf("name"));
+                String strFirst = fileStart.substring("name".length() + 2, fileStart.lastIndexOf("\""));
+                list.add(strFirst);
+                String strEnd = parsText[1].substring(0, parsText[1].length() - 2);
+                list.add(strEnd);
+                listMultipart.add(list);
+            }
+        }
+        return listMultipart;
+    }
+
+    public List<List<String>> getPart(String name) {
+        List<List<String>> bigList = new LinkedList<>();
+        for (List<String> listPart : listMultipart) {
+            List<String> list = new LinkedList<>();
+            if (listPart.get(0).equals(name)) {
+                list.add(listPart.get(0));
+                list.add(listPart.get(1));
+                bigList.add(list);
+            }
+        }
+        return bigList;
+    }
 }

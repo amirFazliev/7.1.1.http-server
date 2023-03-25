@@ -6,6 +6,7 @@ import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.net.Socket;
+import java.util.List;
 
 import static ru.netology.Main.extractPath;
 import static ru.netology.Server.getHandler;
@@ -43,11 +44,20 @@ public class MessageProcessor implements Runnable {
 //                    System.out.println(request.getQueryParam("fsfsdf"));
 //                    System.out.println(request.getQueryParam("last"));
 //                }
+//
+//                if (request.getContentType().equals("application/x-www-form-urlencoded")){
+//                    System.out.println(request.getPostParams());
+//                    System.out.println(request.getPostParam("login"));
+//                }
 
-                if (request.getContentType().equals("application/x-www-form-urlencoded")){
-                    System.out.println(request.getPostParams());
-                    System.out.println(request.getPostParam("login"));
+                System.out.println("_________________");
+                for (List<String> part : request.getParts()) {
+                    System.out.println(part.get(0));
+                    System.out.println(part.get(1));
                 }
+                System.out.println("_________________");
+                System.out.println(request.getPart("login"));
+                System.out.println("_________________");
 
 
 
