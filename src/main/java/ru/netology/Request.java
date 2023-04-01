@@ -103,6 +103,11 @@ public class Request {
         System.out.println(path);
         System.out.println("_________________");
 
+        if (path.contains("?")){
+            String urlParam = path.substring(path.indexOf("?") + 1);
+            listUrlParameters = URLEncodedUtils.parse(urlParam, StandardCharsets.UTF_8);
+        }
+
         this.protocol = parts[2];
     }
 
@@ -163,8 +168,6 @@ public class Request {
     }
 
     public List<NameValuePair> getQueryParams() {
-        String urlParam = path.substring(path.indexOf("?") + 1);
-        listUrlParameters = URLEncodedUtils.parse(urlParam, StandardCharsets.UTF_8);
         return listUrlParameters;
     }
 
