@@ -123,6 +123,11 @@ public class Request {
         System.out.println("_________________");
 
         this.protocol = parts[2];
+
+        if (path.contains("?")) {
+            String urlParam = path.substring(path.indexOf("?") + 1);
+            listUrlParameters = URLEncodedUtils.parse(urlParam, StandardCharsets.UTF_8);
+        }
     }
 
     private boolean pathIsNotValidPath(String path) {
@@ -180,6 +185,42 @@ public class Request {
             System.out.println("_________________");
             System.out.println(body);
             System.out.println("_________________");
+
+            if (contentType.equals("application/x-www-form-urlencoded")){
+                postParams.addAll(Arrays.asList(messageBody.split("&")));
+            }
+
+            if (contentType.equals("multipart/form-data")) {
+                String splits = "--" + boundaryForMultipartFormData + "\r\n";
+                String splitEnd = splits + "--" + "\r\n";
+                String text = messageBody.substring(splits.length(), (messageBody.length() - splitEnd.length()));
+                for (String s : text.split(splits)) {
+                    String[] parsText = s.split("\r\n\r\n");
+                    List<String> list = new ArrayList<>();
+                    if (s.contains("Content-Type: ")) {
+                        String fileNameBasic = s.substring(s.indexOf("filename=") + "filename=".length() + 1);
+                        fileName = fileNameBasic.substring(0, fileNameBasic.indexOf("\""));
+                        list.add(fileName);
+                        fileString = parsText[1];
+                        list.add(fileString);
+                        fileMultiPart = new File(fileName);
+                        try (FileOutputStream fos = new FileOutputStream(fileMultiPart)) {
+                            byte[] bytes = fileString.getBytes();
+                            fos.write(bytes, 0, bytes.length);
+                        } catch (IOException ex) {
+                            System.out.println(ex.getMessage());
+                        }
+                        listMultipart.add(list);
+                    } else {
+                        String fileStart = parsText[0].substring(s.indexOf("name"));
+                        String strFirst = fileStart.substring("name".length() + 2, fileStart.lastIndexOf("\""));
+                        list.add(strFirst);
+                        String strEnd = parsText[1].substring(0, parsText[1].length() - 2);
+                        list.add(strEnd);
+                        listMultipart.add(list);
+                    }
+                }
+            }
         }
     }
 
@@ -216,8 +257,6 @@ public class Request {
     }
 
     public List<NameValuePair> getQueryParams() {
-        String urlParam = path.substring(path.indexOf("?") + 1);
-        listUrlParameters = URLEncodedUtils.parse(urlParam, StandardCharsets.UTF_8);
         return listUrlParameters;
     }
 
@@ -231,9 +270,6 @@ public class Request {
     }
 
     public List<String> getPostParams() {
-        for (String s : messageBody.split("&")) {
-            postParams.add(s);
-        }
         return postParams;
     }
 
@@ -253,35 +289,6 @@ public class Request {
     }
 
     public List<List<String>> getParts() {
-        String splits = "--" + boundaryForMultipartFormData + "\r\n";
-        String splitEnd = splits + "--" + "\r\n";
-        String text = messageBody.substring(splits.length(), (messageBody.length() - splitEnd.length()));
-        for (String s : text.split(splits)) {
-            String[] parsText = s.split("\r\n\r\n");
-            List<String> list = new ArrayList<>();
-            if (s.contains("Content-Type: ")) {
-                String fileNameBasic = s.substring(s.indexOf("filename=") + "filename=".length() + 1);
-                fileName = fileNameBasic.substring(0, fileNameBasic.indexOf("\""));
-                list.add(fileName);
-                fileString = parsText[1];
-                list.add(fileString);
-                fileMultiPart = new File(fileName);
-                try (FileOutputStream fos = new FileOutputStream(fileMultiPart)) {
-                    byte[] bytes = fileString.getBytes();
-                    fos.write(bytes, 0, bytes.length);
-                } catch (IOException ex) {
-                    System.out.println(ex.getMessage());
-                }
-                listMultipart.add(list);
-            } else {
-                String fileStart = parsText[0].substring(s.indexOf("name"));
-                String strFirst = fileStart.substring("name".length() + 2, fileStart.lastIndexOf("\""));
-                list.add(strFirst);
-                String strEnd = parsText[1].substring(0, parsText[1].length() - 2);
-                list.add(strEnd);
-                listMultipart.add(list);
-            }
-        }
         return listMultipart;
     }
 
