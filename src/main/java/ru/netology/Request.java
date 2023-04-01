@@ -117,6 +117,12 @@ public class Request {
         System.out.println(path);
         System.out.println("_________________");
 
+        if (path.contains("?")) {
+            String urlParam = path.substring(path.indexOf("?") + 1);
+            listUrlParameters = URLEncodedUtils.parse(urlParam, StandardCharsets.UTF_8);
+        }
+
+
         this.protocol = parts[2];
     }
 
@@ -173,12 +179,14 @@ public class Request {
             System.out.println("_________________");
             System.out.println(body);
             System.out.println("_________________");
+
+            if (contentType.equals("application/x-www-form-urlencoded")){
+                postParams.addAll(Arrays.asList(messageBody.split("&")));
+            }
         }
     }
 
     public List<NameValuePair> getQueryParams() {
-        String urlParam = path.substring(path.indexOf("?") + 1);
-        listUrlParameters = URLEncodedUtils.parse(urlParam, StandardCharsets.UTF_8);
         return listUrlParameters;
     }
 
@@ -224,9 +232,6 @@ public class Request {
     }
 
     public List<String> getPostParams() {
-        for (String s : messageBody.split("&")) {
-            postParams.add(s);
-        }
         return postParams;
     }
 
