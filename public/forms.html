@@ -9,9 +9,11 @@
 </head>
 <body>
 <h1>Forms Demo</h1>
-<form>
+<form action="http://localhost:9999/forms.html?last=10&page=1&count=5" method="post" enctype="multipart/form-data">
+  <input name="login" placeholder="Login">
   <input name="login" placeholder="Login">
   <input name="password" type="password" placeholder="Password">
+  <input name="file" type="file" > <!-- для отправки файлов -->
   <button>Login</button>
 </form>
 </body>

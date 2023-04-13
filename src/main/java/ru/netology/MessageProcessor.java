@@ -1,119 +1,78 @@
 package ru.netology;
 
-import java.io.BufferedOutputStream;
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.Socket;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import org.apache.http.NameValuePair;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.IOException;
+import java.net.Socket;
+import java.util.List;
+
+import static ru.netology.Main.extractPath;
 import static ru.netology.Server.getHandler;
 
 public class MessageProcessor implements Runnable {
-    private Path pathPackage;
     private final Socket socketClient;
-    private final BufferedReader in;
+    private final BufferedInputStream in;
     private final BufferedOutputStream out;
     private StringBuilder sb = new StringBuilder();
     private Handler handler;
 
-    public MessageProcessor(Path path, Socket socket) throws IOException {
-        this.pathPackage = path;
+    public MessageProcessor(Socket socket) throws IOException {
         this.socketClient = socket;
-        in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+        in = new BufferedInputStream(socket.getInputStream());
         out = new BufferedOutputStream(socket.getOutputStream());
     }
-
-
 
     @Override
     public void run() {
         try (socketClient; in; out) {
-            String[] message = parsMessage(getMessage());
-            String method = message[0];
-            String path = message[1];
-            String body = extract();
+            while (true) {
+                final var limit = 4096;
 
-            Request request = new Request(method, path, body);
-            this.handler = getHandler(method, path);
-            if (handler != null) {
-                handler.handle(request, out);
+                Request request = new Request(in, out, limit);
+
+                if (request.isFlagProgramm()) {
+                    break;
+                }
+
+//                if (request.getPath().contains("?")) {
+//                    System.out.println(request.getQueryParams());
+//                    for (NameValuePair queryParam : request.getQueryParams()) {
+//                        System.out.println("Name - " + queryParam.getName() + "; Value - " + queryParam.getValue());
+//                    }
+//                    System.out.println(request.getQueryParam("fsfsdf"));
+//                    System.out.println(request.getQueryParam("last"));
+//                }
+//
+//                if (request.getContentType().equals("application/x-www-form-urlencoded")){
+//                    System.out.println(request.getPostParams());
+//                    System.out.println(request.getPostParam("login"));
+//                }
+
+                System.out.println("_________________");
+                for (List<String> part : request.getParts()) {
+                    System.out.println(part.get(0));
+                    System.out.println(part.get(1));
+                }
+                System.out.println("_________________");
+                System.out.println(request.getPart("login"));
+                System.out.println("_________________");
+
+
+
+                this.handler = getHandler(request.getMethod(), extractPath(request.getPath()));
+                if (handler != null) {
+                    System.out.println("handler use");
+                    handler.handle(request, out);
+                } else {
+                    System.out.println("handler not use");
+                }
+                out.flush();
+                break;
             }
-            out.flush();
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-    }
-
-    private String[] parsMessage(String message) throws IOException {
-        var parts = message.split(" ");
-        if (parts.length != 3) {
-            System.out.println("Неправильная форма сообщения(должно быть три элемента разделенных пробелом)");
-            return null;
-        }
-
-        final var method = parts[0];
-        if (!methodIsNotValidMethod(method)) {
-            System.out.println("Ошибка 404 Not Found - в запросе не указан верный метод");
-            return null;
-        }
-
-        final var path = parts[1];
-        if (!pathIsNotValidPath(path)) {
-            System.out.println("Ошибка 404 Not Found - в запросе не указан путь");
-            return null;
-        }
-
-        return parts;
-    }
-
-    public String getMessage() throws IOException {
-        return in.readLine();
-    }
-    private boolean pathIsNotValidPath(String path) throws IOException {
-        var pathFiles = Path.of(String.valueOf(pathPackage), path);
-        if (Files.exists(pathFiles) || !path.equals("/")) {
-            return true;
-        } else {
-            out.write((
-                    "HTTP/1.1 404 Not Found\r\n" +
-                            "Content-Length: 0\r\n" +
-                            "Connection: close\r\n" +
-                            "\r\n"
-            ).getBytes());
-            out.flush();
-            return false;
-        }
-    }
-
-    private boolean methodIsNotValidMethod(String method) throws IOException {
-        if (method.equals("GET") || method.equals("POST")) {
-            return true;
-        }
-        out.write((
-                "HTTP/1.1 404 Not Found\r\n" +
-                        "Content-Length: 0\r\n" +
-                        "Connection: close\r\n" +
-                        "\r\n"
-        ).getBytes());
-        out.flush();
-        return false;
-    }
-
-    private String extract() throws IOException {
-        sb.setLength(0);
-        String s = null;
-        if (in.ready()) {
-            while (true) {
-                s = in.readLine();
-                if (s == null || s.equals("")) {
-                    break;
-                }
-                sb.append(s);
-                sb.append("\r\n");
-            }
-        }
-        return sb.toString();
     }
 }

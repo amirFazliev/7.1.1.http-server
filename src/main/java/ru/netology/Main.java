@@ -6,6 +6,8 @@ import java.nio.file.Path;
 import java.time.LocalDateTime;
 
 public class Main {
+
+    static int port = 9999;
     public static void main(String[] args) throws IOException {
 
         String fullPathOneInClassicHtml = "/classic.html";
@@ -20,20 +22,21 @@ public class Main {
         String fullPathTen = "/events.html";
         String fullPathEleven = "/events.js";
 
-        int port = 9999;
-
         Server server = new Server();
 
         // TODO example
-        server.addHandlers("GET", fullPathOneInClassicHtml, handlerIsClassicHtml());
-        server.addHandlers("POST", fullPathThree, handlerIsOtherPath());
+//        server.addHandlers("GET", fullPathOneInClassicHtml, handlerIsClassicHtml());
+//        server.addHandlers("POST", fullPathThree, handlerIsOtherPath());
+
+        server.addHandlers("GET", fullPathEight, handlerIsOtherPath());
+        server.addHandlers("POST", fullPathEight, handlerIsOtherPath());
 
         server.startServer(port);
     }
 
     public static Handler handlerIsClassicHtml () {
         Handler handler = (request, bos) -> {
-            Path filePath = Path.of("./public", request.getPath());
+            Path filePath = Path.of("./public", extractPath(request.getPath()));
             try {
                 final var template = Files.readString(filePath);
                 final var mimeType = Files.probeContentType(filePath);
@@ -59,13 +62,13 @@ public class Main {
 
     public static Handler handlerIsOtherPath () {
         Handler handler = (request, bos) -> {
-            Path filePath = Path.of("./public", request.getPath());
+            Path filePath = Path.of("./public", extractPath(request.getPath()));
             try {
                 final var mimeType = Files.probeContentType(filePath);
                 final var length = Files.size(filePath);
                 bos.write((
                         "HTTP/1.1 200 OK\r\n" +
-                                "Content-Type: " + mimeType + "\r\n" +
+                                "Content-Type: "  + mimeType + "\r\n" +
                                 "Content-Length: " + length + "\r\n" +
                                 "Connection: close\r\n" +
                                 "\r\n"
@@ -77,6 +80,15 @@ public class Main {
             }
         };
         return handler;
+    }
+
+    public static String extractPath(String path) {
+        int first = path.startsWith("/") ? 0 : (path.lastIndexOf("/"));
+        int end = path.contains("?") ? path.indexOf("?") : path.length();
+
+        String text = path.substring(first, end);
+
+        return text;
     }
 }
 
